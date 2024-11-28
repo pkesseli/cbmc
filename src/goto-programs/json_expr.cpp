@@ -22,6 +22,7 @@ Author: Peter Schrammel
 #include <util/namespace.h>
 #include <util/pointer_expr.h>
 #include <util/std_expr.h>
+#include <util/string_constant.h>
 
 #include <langapi/language.h>
 #include <langapi/mode.h>
@@ -338,6 +339,21 @@ json_objectt json(const exprt &expr, const namespacet &ns, const irep_idt &mode)
     }
     else if(simpl_expr.is_constant())
       return json(simpl_expr, ns, mode);
+    else if (ID_string_constant == simpl_expr.id())
+    {
+      std::unique_ptr<languaget> lang;
+      if(mode != ID_unknown)
+        lang = std::unique_ptr<languaget>(get_language_from_mode(mode));
+      if(!lang)
+        lang = std::unique_ptr<languaget>(get_default_language());
+
+      std::string type_string;
+      bool error = lang->from_type(expr.type(), type_string, ns);
+      CHECK_RETURN(!error);
+
+      result["type"] = json_stringt(type_string);
+      result["data"] = json_stringt(to_string_constant(simpl_expr).value());
+    }
     else
       result["name"] = json_stringt("unknown");
   }
