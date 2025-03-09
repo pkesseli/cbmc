@@ -1,0 +1,18 @@
+CORE
+main.c
+--polymath-convert _ --no-standard-checks --show-goto-functions
+^ *DECL __CPROVER_property_switch_0 : 𝔹$
+^ASSUME __CPROVER_property_switch_0 || validate::1::norwegian.nationality = address_of\("norwegian"\[0\]\)$
+^ASSUME __CPROVER_property_switch_0 || validate::1::norwegian.book_genre = address_of\("fantasy"\[0\]\)$
+^ *ASSERT __CPROVER_property_switch_0$
+^ *DEAD __CPROVER_property_switch_0$
+^ *DECL __CPROVER_scored_solution : struct tag-Solution$
+^ *CALL validate\(__CPROVER_scored_solution\)$
+^ *ASSERT main::1::solution ≠ __CPROVER_scored_solution$
+^EXIT=0$
+^SIGNAL=0$
+--
+^warning: ignoring
+^ *CALL validate\(main::1::solution\)$
+^ *OUTPUT address_of\("solution"\[0\]\)$
+^ *ASSERT 0 ≠ 0

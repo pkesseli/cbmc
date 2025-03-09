@@ -36,6 +36,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "generate_function_bodies.h"
 #include "insert_final_assert_false.h"
 #include "nondet_volatile.h"
+#include "polymath_training.h"
 #include "reachability_slicer.h"
 #include "replace_calls.h"
 #include "uninitialized.h"
@@ -125,6 +126,7 @@ Author: Daniel Kroening, kroening@kroening.com
   OPT_ANSI_C_LANGUAGE \
   OPT_RESTRICT_FUNCTION_POINTER \
   OPT_NONDET_VOLATILE \
+  OPT_POLYMATH \
   "(ensure-one-backedge-per-target)" \
   OPT_CONFIG_LIBRARY \
   // empty last line

@@ -91,6 +91,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "nondet_static.h"
 #include "nondet_volatile.h"
 #include "points_to.h"
+#include "polymath_training.h"
 #include "race_check.h"
 #include "remove_function.h"
 #include "rw_set.h"
@@ -1022,6 +1023,7 @@ void goto_instrument_parse_optionst::instrument_goto_program()
   optionst options;
 
   parse_nondet_volatile_options(cmdline, options);
+  parse_polymath_training_options(cmdline, options);
 
   // disable simplify when adding various checks?
   if(cmdline.isset("no-simplify"))
@@ -1720,6 +1722,7 @@ void goto_instrument_parse_optionst::instrument_goto_program()
   label_properties(goto_model);
 
   nondet_volatile(goto_model, options);
+  polymath_training(goto_model, options);
 
   // reachability slice?
   if(cmdline.isset("reachability-slice"))
@@ -1931,6 +1934,7 @@ void goto_instrument_parse_optionst::help()
     "\n"
     "Semantic transformations:\n"
     HELP_NONDET_VOLATILE
+    HELP_POLYMATH
     " {y--isr} {ufunction} \t instruments an interrupt service routine\n"
     " {y--mmio} \t instruments memory-mapped I/O\n"
     " {y--nondet-static} \t add nondeterministic initialization of variables"
