@@ -1722,7 +1722,7 @@ void goto_instrument_parse_optionst::instrument_goto_program()
   label_properties(goto_model);
 
   nondet_volatile(goto_model, options);
-  polymath_training(goto_model, options);
+  polymath_training(ui_message_handler, goto_model, options);
 
   // reachability slice?
   if(cmdline.isset("reachability-slice"))

@@ -1,0 +1,8 @@
+CORE
+main.c
+--polymath-convert --polymath-insert solution.json _ --no-standard-checks
+^EXIT=10$
+^SIGNAL=0$
+^\*\* 20 of 22 failed
+--
+^warning: ignoring

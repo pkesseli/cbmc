@@ -1,0 +1,49 @@
+{
+  "houses": [
+    {
+      "house_number": 3,
+      "name": "Peter",
+      "nationality": "dane",
+      "book_genre": "science fiction",
+      "food": "spaghetti",
+      "color": "yellow",
+      "animal": "cat"
+    },
+    {
+      "house_number": 1,
+      "name": "Bob",
+      "nationality": "german",
+      "book_genre": "mystery",
+      "food": "grilled cheese",
+      "color": "green",
+      "animal": "dog"
+    },
+    {
+      "house_number": 4,
+      "name": "Arnold",
+      "nationality": "swede",
+      "book_genre": "biography",
+      "food": "stir fry",
+      "color": "red",
+      "animal": "bird"
+    },
+    {
+      "house_number": 2,
+      "name": "Eric",
+      "nationality": "norwegian",
+      "book_genre": "fantasy",
+      "food": "stew",
+      "color": "blue",
+      "animal": "fish"
+    },
+    {
+      "house_number": 5,
+      "name": "Alice",
+      "nationality": "brit",
+      "book_genre": "romance",
+      "food": "pizza",
+      "color": "white",
+      "animal": "horse"
+    }
+  ]
+}

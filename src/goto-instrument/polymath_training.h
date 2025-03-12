@@ -18,16 +18,17 @@
 /// converting a Polymath solution synthesis constraint to an RL scorer VC
 /// template, and inserting a solution into an RL scorer VC template.
 ///
-/// \param cmdlinet: Command line input
-/// \param options: command Parsed options
+/// \param cmdlinet Command line input
+/// \param options command Parsed options
 void parse_polymath_training_options(
   const class cmdlinet &cmdline,
   class optionst &options);
 
 /// Applies transformations used during Polymath RL training.
 ///
-/// \param goto_model: Polymath solution synthesis constraint to be converted to
+/// \param message_handler Message handler passed to JSON parser.
+/// \param goto_model Polymath solution synthesis constraint to be converted to
 /// an RL scorer VC template, or an RL scorer VC template into which to insert a
 /// solution.
-/// \param options: command line options
-void polymath_training(class goto_modelt &goto_model, const optionst &options);
+/// \param options command line options
+void polymath_training(class message_handlert &message_handler, class goto_modelt &goto_model, const optionst &options);

@@ -463,6 +463,18 @@ inline const json_stringt &to_json_string(const jsont &json)
   return static_cast<const json_stringt &>(json);
 }
 
+inline json_numbert &to_json_number(jsont &json)
+{
+  PRECONDITION(json.kind == jsont::kindt::J_NUMBER);
+  return static_cast<json_numbert &>(json);
+}
+
+inline const json_numbert &to_json_number(const jsont &json)
+{
+  PRECONDITION(json.kind == jsont::kindt::J_NUMBER);
+  return static_cast<const json_numbert &>(json);
+}
+
 bool operator==(const jsont &left, const jsont &right);
 
 /// Convert the structured_datat into an json object. For example, the

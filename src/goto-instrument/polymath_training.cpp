@@ -13,13 +13,23 @@ Date: March 2024
 
 #include "polymath_training.h"
 
+#include <util/c_types.h>
 #include <util/cmdline.h>
+#include <util/expr_initializer.h>
 #include <util/invariant.h>
 #include <util/options.h>
+#include <util/pointer_expr.h>
+#include <util/string_constant.h>
 
 #include <goto-programs/goto_model.h>
 
+#include <json/json_parser.h>
+
+/// Name of the solution validation function in a Polymath synthesis constraint.
 #define VALIDATE "validate"
+
+/// Name of the symbol storing the inserted, scored solution.
+#define SCORED_SOLUTION "__CPROVER_scored_solution"
 
 void parse_polymath_training_options(const cmdlinet &cmdline, optionst &options)
 {
@@ -63,6 +73,89 @@ static goto_programt &get_function_body(
   return it->second.body;
 }
 
+static exprt json_to_expr(
+  const namespacet &,
+  const source_locationt &,
+  const jsont &,
+  const typet &);
+
+static array_exprt json_to_array_expr(
+  const namespacet &ns,
+  const source_locationt &loc,
+  const json_arrayt &json_array,
+  const array_typet &type)
+{
+  const typet &element_type = type.element_type();
+  array_exprt::operandst operands;
+  for(const jsont &element : json_array)
+  {
+    operands.emplace_back(json_to_expr(ns, loc, element, element_type));
+  }
+  return array_exprt(operands, type);
+}
+
+static struct_exprt json_to_struct_expr(
+  const namespacet &ns,
+  const source_locationt &loc,
+  const json_objectt &json_object,
+  const struct_tag_typet &type)
+{
+  struct_exprt struct_expr =
+    to_struct_expr(zero_initializer(type, loc, ns).value());
+  const struct_typet &struct_type = ns.follow_tag(type);
+  for(const struct_typet::componentt &component : struct_type.components())
+  {
+    if(component.get_is_padding())
+    {
+      continue;
+    }
+
+    const irep_idt &id = component.get_name();
+    const std::string &name = id2string(id);
+    const typet &component_type = component.type();
+    exprt &value = struct_expr.component(name, ns);
+    value = json_to_expr(ns, loc, json_object[id2string(name)], component_type);
+  }
+  return struct_expr;
+}
+
+static exprt json_to_expr(
+  const namespacet &ns,
+  const source_locationt &loc,
+  const jsont &json,
+  const typet &type)
+{
+  const irep_idt &type_id = type.id();
+  if(ID_struct_tag == type_id)
+  {
+    return json_to_struct_expr(
+      ns, loc, to_json_object(json), to_struct_tag_type(type));
+  }
+  if(ID_array == type_id)
+  {
+    return json_to_array_expr(
+      ns, loc, to_json_array(json), to_array_type(type));
+  }
+  if(
+    ID_signedbv == type_id || ID_unsignedbv == type_id || ID_floatbv == type_id)
+  {
+    return constant_exprt(to_json_number(json).value, type);
+  }
+  if(ID_pointer == type_id)
+  {
+    const pointer_typet &pointer_type = to_pointer_type(type);
+    if(char_type() == pointer_type.subtype())
+    {
+      const std::string &value = to_json_string(json).value;
+      const exprt zero = zero_initializer(c_index_type(), loc, ns).value();
+      const string_constantt string_literal(value);
+      return address_of_exprt(index_exprt(string_literal, zero));
+    }
+  }
+
+  UNREACHABLE_BECAUSE("Property expression type: " + id2string(type_id));
+}
+
 namespace
 {
 /// Helper to transform the \c validate method in a Polymath synthesis
@@ -83,8 +176,8 @@ namespace
 /// int lhs;
 /// int rhs;
 /// __CPROVER_bool __CPROVER_property_switch_0;
-/// __CPROVER_assume(!__CPROVER_property_switch_0 || (lhs > 0));
-/// __CPROVER_assume(!__CPROVER_property_switch_0 || (rhs == lhs + 1))
+/// __CPROVER_assume(__CPROVER_property_switch_0 || (lhs > 0));
+/// __CPROVER_assume(__CPROVER_property_switch_0 || (rhs == lhs + 1))
 /// __CPROVER_assert(__CPROVER_property_switch_0, "")
 /// int x;
 /// ...
@@ -156,8 +249,7 @@ public:
 
       for(auto it = first; it != last; ++it)
       {
-        it->condition_nonconst() =
-          or_exprt(not_exprt(property_switch), it->condition());
+        it->condition_nonconst() = or_exprt(property_switch, it->condition());
       }
 
       goto_programt::instructiont decl_property_switch =
@@ -184,7 +276,7 @@ public:
 /// struct Solution solution;
 /// init_Solution(&solution);
 /// validate(solution);
-/// 
+///
 /// __CPROVER_output("solution", solution);
 /// __CPROVER_assert(false, "");
 /// \endcode
@@ -195,7 +287,7 @@ public:
 /// validate(__CPROVER_scored_solution);
 /// struct Solution solution;
 /// init_Solution(&solution);
-/// __CPROVER_assert(solution == __CPROVER_scored_solution, "");
+/// __CPROVER_assert(solution != __CPROVER_scored_solution, "");
 /// \endcode
 ///
 /// This transformation invokes \c validate on an inserted
@@ -211,15 +303,15 @@ public:
   {
   }
 
-  void operator()()
+  void operator()() const
   {
     symbol_tablet &symbol_table = goto_model.symbol_table;
     goto_programt &main =
-      get_function_body(goto_model, "main", POLYMATH_CONVERT_OPT);
+      get_function_body(goto_model, ID_main, POLYMATH_CONVERT_OPT);
 
     const symbolt &solution = symbol_table.lookup_ref("main::1::solution");
     const symbolt scored_solution_symbol(
-      "__CPROVER_scored_solution", solution.type, solution.mode);
+      SCORED_SOLUTION, solution.type, solution.mode);
     symbol_table.add(scored_solution_symbol);
     const symbol_exprt scored_solution = scored_solution_symbol.symbol_expr();
 
@@ -268,12 +360,70 @@ public:
         "--" + std::string(POLYMATH_CONVERT_OPT));
     }
     target->condition_nonconst() =
-      equal_exprt(solution.symbol_expr(), scored_solution);
+      notequal_exprt(solution.symbol_expr(), scored_solution);
+  }
+};
+
+class insert_solutiont
+{
+  message_handlert &message_handler;
+  goto_modelt &goto_model;
+  const std::string &solution_file_name;
+
+public:
+  insert_solutiont(
+    message_handlert &message_handler,
+    goto_modelt &goto_model,
+    const std::string &solution_file_name)
+    : message_handler(message_handler),
+      goto_model(goto_model),
+      solution_file_name(solution_file_name)
+  {
+  }
+
+  void operator()() const
+  {
+    goto_programt &main =
+      get_function_body(goto_model, ID_main, POLYMATH_INSERT_OPT);
+    goto_programt::instructionst &instructions = main.instructions;
+    const irep_idt scored_solution = SCORED_SOLUTION;
+    const goto_programt::targett target = find_if(
+      begin(instructions),
+      end(instructions),
+      [&scored_solution](const goto_programt::instructiont &instruction)
+      {
+        return instruction.is_decl() &&
+               instruction.decl_symbol().get_identifier() == scored_solution;
+      });
+
+    if(cend(instructions) == target)
+    {
+      throw invalid_command_line_argument_exceptiont(
+        "missing local variable to store inserted solution",
+        "--" + std::string(POLYMATH_INSERT_OPT));
+    }
+
+    jsont solution_json;
+    if(parse_json(solution_file_name, message_handler, solution_json))
+    {
+      throw invalid_command_line_argument_exceptiont(
+        "failed to read solution JSON file",
+        "--" + std::string(POLYMATH_INSERT_OPT));
+    }
+
+    const namespacet ns(goto_model.symbol_table);
+    const symbol_exprt &lhs = target->decl_symbol();
+    const source_locationt &loc = target->source_location();
+    const exprt rhs = json_to_expr(ns, loc, solution_json, lhs.type());
+    main.insert_after(target, goto_programt::make_assignment(lhs, rhs, loc));
   }
 };
 } // namespace
 
-void polymath_training(goto_modelt &goto_model, const optionst &options)
+void polymath_training(
+  message_handlert &message_handler,
+  goto_modelt &goto_model,
+  const optionst &options)
 {
   const bool should_convert = options.is_set(POLYMATH_CONVERT_OPT);
   if(should_convert)
@@ -285,5 +435,12 @@ void polymath_training(goto_modelt &goto_model, const optionst &options)
   }
 
   const bool should_insert = options.is_set(POLYMATH_INSERT_OPT);
-  (void)should_insert;
+  if(should_insert)
+  {
+    const std::string solution_file_name =
+      options.get_option(POLYMATH_INSERT_OPT);
+    insert_solutiont insert_solution(
+      message_handler, goto_model, solution_file_name);
+    insert_solution();
+  }
 }
