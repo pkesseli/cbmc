@@ -35,9 +35,11 @@ void parse_polymath_training_options(const cmdlinet &cmdline, optionst &options)
 {
   PRECONDITION(!options.is_set(POLYMATH_CONVERT_OPT));
   PRECONDITION(!options.is_set(POLYMATH_INSERT_OPT));
+  PRECONDITION(!options.is_set(POLYMATH_LOWERCASE_OPT));
 
   const bool polymath_convert_opt = cmdline.isset(POLYMATH_CONVERT_OPT);
   const bool polymath_insert_opt = cmdline.isset(POLYMATH_INSERT_OPT);
+  const bool polymath_lowercase_opt = cmdline.isset(POLYMATH_LOWERCASE_OPT);
 
   if(polymath_convert_opt)
   {
@@ -48,6 +50,11 @@ void parse_polymath_training_options(const cmdlinet &cmdline, optionst &options)
   {
     options.set_option(
       POLYMATH_INSERT_OPT, cmdline.get_value(POLYMATH_INSERT_OPT));
+  }
+  if(polymath_lowercase_opt)
+  {
+    options.set_option(
+      POLYMATH_LOWERCASE_OPT, cmdline.get_value(POLYMATH_LOWERCASE_OPT));
   }
 }
 
@@ -364,6 +371,7 @@ public:
   }
 };
 
+/// Helper inserting a solution to score into the `main` function.
 class insert_solutiont
 {
   message_handlert &message_handler;
@@ -418,6 +426,80 @@ public:
     main.insert_after(target, goto_programt::make_assignment(lhs, rhs, loc));
   }
 };
+
+/// Visitor which converts every string literal to lower case.
+class lowercase_visitort : public expr_visitort
+{
+  /// Converts \c id to lower case, reusing \c id if it is already in lower
+  /// case.
+  ///
+  /// \param id String to convert to lower case.
+  /// \return Lower case version of \c id.
+  static irep_idt to_lower(const irep_idt &id)
+  {
+    const std::string &value = id2string(id);
+    std::string lower_value;
+    bool was_modified = false;
+    for(const char c : value)
+    {
+      const char lower_char = std::tolower(c);
+      was_modified |= c != lower_char;
+      lower_value.push_back(lower_char);
+    }
+
+    return was_modified ? lower_value : id;
+  }
+
+public:
+  virtual void operator()(exprt &expr)
+  {
+    if(ID_string_constant == expr.id())
+    {
+      string_constantt &string_constant = to_string_constant(expr);
+      string_constant.value(to_lower(string_constant.value()));
+    }
+  }
+};
+
+/// Converts all string literals in all expressions in the entire GOTO model to
+/// lower case.
+class convert_to_lowercaset
+{
+  goto_modelt &model;
+  lowercase_visitort visitor;
+
+public:
+  convert_to_lowercaset(goto_modelt &model) : model(model)
+  {
+  }
+
+  void operator()()
+  {
+    symbol_tablet &symbol_table = model.symbol_table;
+    for(auto it = std::begin(symbol_table); it != std::end(symbol_table); ++it)
+    {
+      it.get_writeable_symbol().value.visit(visitor);
+    }
+    goto_functionst &goto_functions = model.goto_functions;
+    auto &functions_map = goto_functions.function_map;
+    for(auto &function : functions_map)
+    {
+      for(auto &instr : function.second.body.instructions)
+      {
+        if (instr.has_condition())
+        {
+          instr.condition_nonconst().visit(visitor);
+        }
+
+        goto_instruction_codet &code = instr.code_nonconst();
+        for (exprt &op : code.operands())
+        {
+          op.visit(visitor);
+        }
+      }
+    }
+  }
+};
 } // namespace
 
 void polymath_training(
@@ -442,5 +524,12 @@ void polymath_training(
     insert_solutiont insert_solution(
       message_handler, goto_model, solution_file_name);
     insert_solution();
+  }
+
+  const bool should_lowercase = options.is_set(POLYMATH_LOWERCASE_OPT);
+  if(should_lowercase)
+  {
+    convert_to_lowercaset convert_to_lowercase(goto_model);
+    convert_to_lowercase();
   }
 }

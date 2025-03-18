@@ -1,4 +1,4 @@
-CORE
+CORE POLYMATH
 main.c
 --polymath-convert --polymath-insert solution.json _ --no-standard-checks
 ^EXIT=10$

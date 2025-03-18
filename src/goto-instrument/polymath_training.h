@@ -2,16 +2,20 @@
 // clang-format off
 #define POLYMATH_CONVERT_OPT "polymath-convert"
 #define POLYMATH_INSERT_OPT "polymath-insert"
+#define POLYMATH_LOWERCASE_OPT "polymath-lowercase"
 
 #define OPT_POLYMATH \
   "(" POLYMATH_CONVERT_OPT ")" \
-  "(" POLYMATH_INSERT_OPT "):"
+  "(" POLYMATH_INSERT_OPT "):" \
+  "(" POLYMATH_LOWERCASE_OPT ")"
 
 #define HELP_POLYMATH \
   " {y--" POLYMATH_CONVERT_OPT "} \t " \
   "Transform Polymath solution synthesis constraint to an RL scorer VC template\n" \
   " {y--" POLYMATH_INSERT_OPT "} {json-file} \t " \
   "read Polymath solution from {json-file} and insert into VC template\n" \
+  " {y--" POLYMATH_LOWERCASE_OPT "} \t " \
+  "Convert a string literals to lowercase in the GOTO program\n" \
 // clang-format on
 
 /// Read command line options related to Polymath RL training. Includes
