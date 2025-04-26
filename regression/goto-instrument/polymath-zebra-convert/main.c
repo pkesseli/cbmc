@@ -7,8 +7,6 @@
 #ifndef __CPROVER
 void __CPROVER_assume(bool condition);
 void __CPROVER_assert(bool condition, const char *message);
-#else
-#define abs(value) ((value) < 0 ? -(value) : value)
 #endif
 
 #define __CPROVER_unique_domain(field, field_domain_array)                                  {                                                                                               size_t index;                                                                               __CPROVER_assume(index < (sizeof(field_domain_array) / sizeof(field_domain_array[0])));     __CPROVER_assume(!field_domain_array##_used[index]);                                        field_domain_array##_used[index] = true;                                                    field = field_domain_array[index];                                                      }
@@ -32,120 +30,95 @@ static size_t __CPROVER_index_dispatch(bool comparison) {
 
 #define __CPROVER_index(array, value)     __CPROVER_index_dispatch(array[__CPROVER_index_tmp = __CPROVER_nondet_index(array)] == value)
 
-struct House {
+struct Entity {
     int house_number;
+    const char * favorite_color;
+    const char * favorite_vegetable;
     const char * name;
-    const char * nationality;
-    const char * book_genre;
-    const char * food;
-    const char * color;
-    const char * animal;
+    const char * occupation;
 };
 
-static int House_house_number[] = {1, 2, 3, 4, 5};
-static bool House_house_number_used[5];
-static const char * House_name[] = {"Peter", "Alice", "Bob", "Eric", "Arnold"};
-static bool House_name_used[5];
-static const char * House_nationality[] = {"norwegian", "german", "dane", "brit", "swede"};
-static bool House_nationality_used[5];
-static const char * House_book_genre[] = {"fantasy", "biography", "romance", "mystery", "science fiction"};
-static bool House_book_genre_used[5];
-static const char * House_food[] = {"stir fry", "grilled cheese", "pizza", "spaghetti", "stew"};
-static bool House_food_used[5];
-static const char * House_color[] = {"red", "green", "blue", "yellow", "white"};
-static bool House_color_used[5];
-static const char * House_animal[] = {"bird", "dog", "cat", "horse", "fish"};
-static bool House_animal_used[5];
+static int Entity_house_number[] = {1, 2, 3};
+static bool Entity_house_number_used[3];
+static const char * Entity_favorite_color[] = {"blue", "teal", "pink"};
+static bool Entity_favorite_color_used[3];
+static const char * Entity_favorite_vegetable[] = {"tomato", "carrot", "bell pepper"};
+static bool Entity_favorite_vegetable_used[3];
+static const char * Entity_name[] = {"john", "benjamin", "lisa"};
+static bool Entity_name_used[3];
+static const char * Entity_occupation[] = {"teacher", "programmer", "musician"};
+static bool Entity_occupation_used[3];
 
-static void init_House(struct House * instance) {
-    __CPROVER_unique_domain(instance->house_number, House_house_number);
-    __CPROVER_unique_domain(instance->name, House_name);
-    __CPROVER_unique_domain(instance->nationality, House_nationality);
-    __CPROVER_unique_domain(instance->book_genre, House_book_genre);
-    __CPROVER_unique_domain(instance->food, House_food);
-    __CPROVER_unique_domain(instance->color, House_color);
-    __CPROVER_unique_domain(instance->animal, House_animal);
+static void init_Entity(struct Entity * instance) {
+    __CPROVER_unique_domain(instance->house_number, Entity_house_number);
+    __CPROVER_unique_domain(instance->favorite_color, Entity_favorite_color);
+    __CPROVER_unique_domain(instance->favorite_vegetable, Entity_favorite_vegetable);
+    __CPROVER_unique_domain(instance->name, Entity_name);
+    __CPROVER_unique_domain(instance->occupation, Entity_occupation);
 }
 
-struct Solution {
-    struct House houses[5];
+struct PuzzleSolution {
+    struct Entity entities[3];
 };
 
-static void init_Solution(struct Solution * instance) {
-    for (size_t i = 0; i < sizeof(instance->houses) / sizeof(instance->houses[0]); ++i) {
-        init_House(&instance->houses[i]);
+static void init_PuzzleSolution(struct PuzzleSolution * instance) {
+    for (size_t i = 0; i < sizeof(instance->entities) / sizeof(instance->entities[0]); ++i) {
+        init_Entity(&instance->entities[i]);
     }
 }
 
-static void validate(struct Solution solution) {
-    typeof(__CPROVER_nondet_element(solution.houses)) norwegian = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(norwegian.nationality == "norwegian");
-    __CPROVER_assume(norwegian.book_genre == "fantasy");
-    typeof(__CPROVER_nondet_element(solution.houses)) cat_lover = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(cat_lover.animal == "cat");
-    typeof(__CPROVER_nondet_element(solution.houses)) biography_reader = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(biography_reader.book_genre == "biography");
-    __CPROVER_assume(abs(cat_lover.house_number - biography_reader.house_number) == 1);
-    typeof(__CPROVER_nondet_element(solution.houses)) german = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(german.nationality == "german");
-    __CPROVER_assume(german.name == "Bob");
-    typeof(__CPROVER_nondet_element(solution.houses)) yellow_lover = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(yellow_lover.color == "yellow");
-    __CPROVER_assume(yellow_lover.name == "Bob");
-    typeof(__CPROVER_nondet_element(solution.houses)) green_lover = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(green_lover.color == "green");
-    __CPROVER_assume(green_lover.name == "Peter");
-    typeof(__CPROVER_nondet_element(solution.houses)) dane = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(dane.nationality == "dane");
-    typeof(__CPROVER_nondet_element(solution.houses)) pizza_lover = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(pizza_lover.food == "pizza");
-    __CPROVER_assume(abs(dane.house_number - pizza_lover.house_number) == 2);
-    typeof(__CPROVER_nondet_element(solution.houses)) blue_lover = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(blue_lover.color == "blue");
-    __CPROVER_assume(blue_lover.house_number < dane.house_number);
-    typeof(__CPROVER_nondet_element(solution.houses)) grilled_cheese_lover = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(grilled_cheese_lover.food == "grilled cheese");
-    __CPROVER_assume(grilled_cheese_lover.house_number < norwegian.house_number);
-    typeof(__CPROVER_nondet_element(solution.houses)) spaghetti_eater = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(spaghetti_eater.food == "spaghetti");
-    __CPROVER_assume(spaghetti_eater.name == "Peter");
-    typeof(__CPROVER_nondet_element(solution.houses)) horse_keeper = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(horse_keeper.animal == "horse");
-    __CPROVER_assume(horse_keeper.name == "Alice");
-    typeof(__CPROVER_nondet_element(solution.houses)) fish_enthusiast = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(fish_enthusiast.animal == "fish");
-    typeof(__CPROVER_nondet_element(solution.houses)) science_fiction_reader = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(science_fiction_reader.book_genre == "science fiction");
-    __CPROVER_assume(fish_enthusiast.house_number + 1 == science_fiction_reader.house_number);
-    typeof(__CPROVER_nondet_element(solution.houses)) arnold = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(arnold.name == "Arnold");
-    __CPROVER_assume(abs(norwegian.house_number - arnold.house_number) == 2);
-    typeof(__CPROVER_nondet_element(solution.houses)) romance_reader = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(romance_reader.book_genre == "romance");
-    typeof(__CPROVER_nondet_element(solution.houses)) brit = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(brit.nationality == "brit");
-    __CPROVER_assume(romance_reader.house_number == brit.house_number);
-    __CPROVER_assume(abs(norwegian.house_number - horse_keeper.house_number) == 3);
-    typeof(__CPROVER_nondet_element(solution.houses)) bird_keeper = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(bird_keeper.animal == "bird");
-    typeof(__CPROVER_nondet_element(solution.houses)) red_lover = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(red_lover.color == "red");
-    __CPROVER_assume(bird_keeper.house_number == red_lover.house_number);
-    typeof(__CPROVER_nondet_element(solution.houses)) dog_owner = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(dog_owner.animal == "dog");
-    __CPROVER_assume(dog_owner.house_number + 1 == fish_enthusiast.house_number);
-    typeof(__CPROVER_nondet_element(solution.houses)) stew_lover = __CPROVER_nondet_element(solution.houses);
-    __CPROVER_assume(stew_lover.food == "stew");
-    __CPROVER_assume(stew_lover.house_number == norwegian.house_number);
+static void validate(struct PuzzleSolution solution) {
+    typeof(__CPROVER_nondet_element(solution.entities)) entity_0 = __CPROVER_nondet_element(solution.entities);
+    __CPROVER_assume(entity_0.favorite_vegetable == "tomato");
+    typeof(__CPROVER_nondet_element(solution.entities)) entity_1 = __CPROVER_nondet_element(solution.entities);
+    __CPROVER_assume(entity_1.occupation == "programmer");
+    __CPROVER_assume(__CPROVER_abs(entity_0.house_number - entity_1.house_number) == 1);
+    ;
+    typeof(__CPROVER_nondet_element(solution.entities)) entity_2 = __CPROVER_nondet_element(solution.entities);
+    __CPROVER_assume(entity_2.favorite_vegetable == "carrot");
+    typeof(__CPROVER_nondet_element(solution.entities)) entity_3 = __CPROVER_nondet_element(solution.entities);
+    __CPROVER_assume(entity_3.favorite_vegetable == "bell pepper");
+    __CPROVER_assume(entity_2.house_number == entity_3.house_number + 1);
+    ;
+    typeof(__CPROVER_nondet_element(solution.entities)) entity_4 = __CPROVER_nondet_element(solution.entities);
+    __CPROVER_assume(entity_4.favorite_vegetable == "carrot");
+    typeof(__CPROVER_nondet_element(solution.entities)) entity_5 = __CPROVER_nondet_element(solution.entities);
+    __CPROVER_assume(entity_5.name == "lisa");
+    __CPROVER_assume(entity_4.house_number == entity_5.house_number);
+    ;
+    typeof(__CPROVER_nondet_element(solution.entities)) entity_6 = __CPROVER_nondet_element(solution.entities);
+    __CPROVER_assume(entity_6.favorite_color == "pink");
+    typeof(__CPROVER_nondet_element(solution.entities)) entity_7 = __CPROVER_nondet_element(solution.entities);
+    __CPROVER_assume(entity_7.name == "john");
+    __CPROVER_assume(__CPROVER_abs(entity_6.house_number - entity_7.house_number) == 1);
+    ;
+    typeof(__CPROVER_nondet_element(solution.entities)) entity_8 = __CPROVER_nondet_element(solution.entities);
+    __CPROVER_assume(entity_8.favorite_vegetable == "bell pepper");
+    typeof(__CPROVER_nondet_element(solution.entities)) entity_9 = __CPROVER_nondet_element(solution.entities);
+    __CPROVER_assume(entity_9.favorite_color == "teal");
+    __CPROVER_assume(entity_8.house_number == entity_9.house_number - 1);
+    ;
+    typeof(__CPROVER_nondet_element(solution.entities)) entity_10 = __CPROVER_nondet_element(solution.entities);
+    __CPROVER_assume(entity_10.occupation == "musician");
+    typeof(__CPROVER_nondet_element(solution.entities)) entity_11 = __CPROVER_nondet_element(solution.entities);
+    __CPROVER_assume(entity_11.occupation == "programmer");
+    __CPROVER_assume(entity_10.house_number == entity_11.house_number - 1);
+    ;
+    typeof(__CPROVER_nondet_element(solution.entities)) entity_12 = __CPROVER_nondet_element(solution.entities);
+    __CPROVER_assume(entity_12.favorite_color == "pink");
+    typeof(__CPROVER_nondet_element(solution.entities)) entity_13 = __CPROVER_nondet_element(solution.entities);
+    __CPROVER_assume(entity_13.occupation == "musician");
+    __CPROVER_assume(__CPROVER_abs(entity_12.house_number - entity_13.house_number) == 1);
+    ;
 }
 
 #ifndef __CPROVER
-void __CPROVER_output(const char *name, struct Solution solution);
+void __CPROVER_output(const char *name, struct PuzzleSolution solution);
 #endif
 
 int main(void) {
-    struct Solution solution;
-    init_Solution(&solution);
+    struct PuzzleSolution solution;
+    init_PuzzleSolution(&solution);
     validate(solution);
 
     __CPROVER_output("solution", solution);

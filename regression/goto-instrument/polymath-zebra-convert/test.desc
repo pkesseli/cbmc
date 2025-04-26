@@ -1,14 +1,15 @@
 CORE POLYMATH
 main.c
 --polymath-convert --polymath-lowercase _ --no-standard-checks --show-goto-functions
-^ *ASSIGN House_name := \{ address_of\("peter"\[0\]\), address_of\("alice"\[0\]\), address_of\("bob"\[0\]\), address_of\("eric"\[0\]\), address_of\("arnold"\[0\]\) \}$
+^ *ASSIGN Entity_name := \{ address_of\("john"\[0\]\), address_of\("benjamin"\[0\]\), address_of\("lisa"\[0\]\) \}$
 ^ *DECL __CPROVER_property_switch_0 : 𝔹$
-^ *ASSUME __CPROVER_property_switch_0 ∨ validate::1::norwegian.nationality = address_of\("norwegian"\[0\]\)$
-^ *ASSUME __CPROVER_property_switch_0 ∨ validate::1::norwegian.book_genre = address_of\("fantasy"\[0\]\)$
+^ *ASSUME __CPROVER_property_switch_0 ∨ validate::1::entity_0.favorite_vegetable = address_of\("tomato"\[0\]\)$
+^ *ASSUME __CPROVER_property_switch_0 ∨ validate::1::entity_1.occupation = address_of\("programmer"\[0\]\)$
+^ *ASSUME __CPROVER_property_switch_0 ∨ abs\(validate::1::entity_0.house_number - validate::1::entity_1.house_number\) = 1
 ^ *ASSERT __CPROVER_property_switch_0$
 ^ *DEAD __CPROVER_property_switch_0$
-^ *ASSUME __CPROVER_property_switch_4 ∨ validate::1::yellow_lover.name = address_of\("bob"\[0\]\)$
-^ *DECL __CPROVER_scored_solution : struct tag-Solution$
+^ *ASSUME __CPROVER_property_switch_5 ∨ validate::1::entity_10.house_number = validate::1::entity_11.house_number - 1$
+^ *DECL __CPROVER_scored_solution : struct tag-PuzzleSolution$
 ^ *CALL validate\(__CPROVER_scored_solution\)$
 ^ *ASSERT main::1::solution ≠ __CPROVER_scored_solution$
 ^EXIT=0$

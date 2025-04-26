@@ -213,37 +213,35 @@ public:
   {
   }
 
-  /// Finds the next range of assume statements. Multiple subsequent assumptions
-  /// in a Polymath synthesis constraint are treated as a single property.
+  /// Finds the next range of statements belonging to one property. This is
+  /// explicilty marked in Polymath using `SKIP` instructions.
   ///
-  /// \return Pair if \c targett iterators, containing the next range of
-  /// assumptions found in the range \c [current_instruction,end). This range of
-  /// assumptions is exclusive, meaning that \c second no longer refers to an
-  /// assumption.
-  std::pair<goto_programt::targett, goto_programt::targett> next_assume_range()
+  /// \return Pair if \c targett iterators, containing the instructios belonging
+  /// to the next property found in the range \c [current_instruction,end). This
+  /// range of assumptions is exclusive, meaning that \c second is no longer
+  /// part of the property.
+  std::pair<goto_programt::targett, goto_programt::targett>
+  next_property_range()
   {
     const goto_programt::targett end_of_body = end(instructions);
-    auto is_assume = std::mem_fun_ref(&goto_programt::instructiont::is_assume);
-    const goto_programt::targett first =
-      find_if(current_instruction, end_of_body, is_assume);
+    const goto_programt::targett first = current_instruction;
+    const goto_programt::targett last = find_if(
+      first,
+      end_of_body,
+      std::mem_fun_ref(&goto_programt::instructiont::is_skip));
 
-    if(first == end_of_body)
+    if(last == end_of_body)
     {
       return make_pair(end_of_body, end_of_body);
     }
 
-    current_instruction = find_if(first, end_of_body, not1(is_assume));
-    if(current_instruction == end_of_body)
-    {
-      return make_pair(first, next(first));
-    }
-
-    return make_pair(first, current_instruction);
+    current_instruction = next(last);
+    return make_pair(first, last);
   }
 
   void operator()()
   {
-    auto [first, last] = next_assume_range();
+    auto [first, last] = next_property_range();
     size_t property_switch_index = 0u;
     while(first != last)
     {
@@ -256,7 +254,10 @@ public:
 
       for(auto it = first; it != last; ++it)
       {
-        it->condition_nonconst() = or_exprt(property_switch, it->condition());
+        if (it->is_assume())
+        {
+          it->condition_nonconst() = or_exprt(property_switch, it->condition());
+        }
       }
 
       goto_programt::instructiont decl_property_switch =
@@ -270,7 +271,7 @@ public:
         assertion,
         goto_programt::make_dead(property_switch, last->source_location()));
 
-      tie(first, last) = next_assume_range();
+      tie(first, last) = next_property_range();
     }
   }
 };

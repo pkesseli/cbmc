@@ -1,49 +1,25 @@
 {
-  "houses": [
-    {
-      "house_number": 3,
-      "name": "Peter",
-      "nationality": "dane",
-      "book_genre": "science fiction",
-      "food": "spaghetti",
-      "color": "green",
-      "animal": "cat"
-    },
+  "entities": [
     {
       "house_number": 1,
-      "name": "bob",
-      "nationality": "german",
-      "book_genre": "mystery",
-      "food": "grilled cheese",
-      "color": "yellow",
-      "animal": "dog"
-    },
-    {
-      "house_number": 4,
-      "name": "arnold",
-      "nationality": "swede",
-      "book_genre": "biography",
-      "food": "stir fry",
-      "color": "red",
-      "animal": "bird"
+      "favorite_color": "Blue",
+      "favorite_vegetable": "Tomato",
+      "name": "john",
+      "occupation": "Musician"
     },
     {
       "house_number": 2,
-      "name": "eric",
-      "nationality": "norwegian",
-      "book_genre": "fantasy",
-      "food": "stew",
-      "color": "blue",
-      "animal": "fish"
+      "favorite_color": "Pink",
+      "favorite_vegetable": "Bell pepper",
+      "name": "benjamin",
+      "occupation": "Programmer"
     },
     {
-      "house_number": 5,
-      "name": "alice",
-      "nationality": "brit",
-      "book_genre": "romance",
-      "food": "pizza",
-      "color": "white",
-      "animal": "horse"
+      "house_number": 3,
+      "favorite_color": "Teal",
+      "favorite_vegetable": "Carrot",
+      "name": "lisa",
+      "occupation": "Teacher"
     }
   ]
 }
